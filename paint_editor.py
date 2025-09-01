@@ -123,14 +123,17 @@ CONTROLS:
         canvas_frame = ttk.LabelFrame(main_frame, text="🏁 Track Canvas", padding=5)
         canvas_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
         
-        # Matplotlib figure
-        self.fig = Figure(figsize=(10, 8), dpi=100)
+        # Matplotlib figure - MAXIMUM use of available space
+        self.fig = Figure(figsize=(16, 12), dpi=100)  # Even larger figure
         self.ax = self.fig.add_subplot(111)
-        self.ax.set_xlim(-100, 100)
-        self.ax.set_ylim(-100, 100)
-        self.ax.set_aspect('equal')
+        self.ax.set_xlim(-200, 200)
+        self.ax.set_ylim(-200, 200)
+        # Remove aspect='equal' to use full window space
         self.ax.grid(True, alpha=0.3)
         self.ax.set_title("Draw Your Track Here")
+        
+        # Make plot use maximum space
+        self.fig.subplots_adjust(left=0.05, right=0.98, top=0.95, bottom=0.08)
         
         # Canvas widget
         self.canvas = FigureCanvasTkAgg(self.fig, canvas_frame)
@@ -203,11 +206,12 @@ CONTROLS:
         self.racing_line_result = None
         
         self.ax.clear()
-        self.ax.set_xlim(-100, 100)
-        self.ax.set_ylim(-100, 100)
-        self.ax.set_aspect('equal')
+        self.ax.set_xlim(-200, 200)
+        self.ax.set_ylim(-200, 200)
+        # Remove aspect='equal' to use full window space  
         self.ax.grid(True, alpha=0.3)
         self.ax.set_title("Draw Your Track Here")
+        self.fig.subplots_adjust(left=0.05, right=0.98, top=0.95, bottom=0.08)
         self.canvas.draw()
         
         self.results_text.delete(1.0, tk.END)
@@ -448,8 +452,11 @@ CONTROLS:
             return
         
         self.ax.clear()
-        self.ax.set_aspect('equal')
+        # Remove aspect='equal' to use full window space
+        self.ax.set_xlim(-200, 200)
+        self.ax.set_ylim(-200, 200)
         self.ax.grid(True, alpha=0.3)
+        self.fig.subplots_adjust(left=0.05, right=0.98, top=0.95, bottom=0.08)
         
         # Track boundaries
         inner_boundary, outer_boundary = compute_track_boundaries(self.track)
@@ -488,11 +495,19 @@ CONTROLS:
         self.root.update()
         
         try:
-            # Get baseline
-            centerline_speeds, centerline_time = compute_speed_profile(self.track, self.vehicle)
+            # Create vehicle with CURRENT slider values for optimization
+            current_vehicle = VehicleModel(
+                mu_friction=self.friction_var.get(),
+                max_accel=self.accel_var.get(),
+                max_brake=self.brake_var.get(),
+                max_speed=100.0
+            )
             
-            # Optimize
-            racing_offsets, racing_time = optimize_simple(self.track, self.vehicle, max_iter=15)
+            # Get baseline
+            centerline_speeds, centerline_time = compute_speed_profile(self.track, current_vehicle)
+            
+            # Optimize with current slider values
+            racing_offsets, racing_time = optimize_simple(self.track, current_vehicle, max_iter=15)
             
             # Compute racing line speeds
             modified_samples = []
